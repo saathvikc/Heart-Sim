@@ -18,7 +18,7 @@ def render_sidebar() -> Dict[str, Any]:
         Dictionary with selected parameters
     """
     # Drug selection
-    st.sidebar.header("💊 Drug Administration")
+    st.sidebar.header("Drug Administration")
     selected_drug = st.sidebar.selectbox("Select Drug", list(DRUG_DATABASE.keys()))
     drug_profile = DRUG_DATABASE[selected_drug]
 
@@ -51,7 +51,7 @@ def render_current_status(heart_model: HeartModel, drug_profile: DrugProfile,
         dose: Drug dose
         sim_duration: Simulation duration
     """
-    st.subheader("📊 Current Status")
+    st.subheader("Current Status")
     
     # Current time selector
     current_time = st.slider("Current Time (hours)", 0.0, float(sim_duration), 2.0, 0.1)
@@ -94,7 +94,7 @@ def render_current_status(heart_model: HeartModel, drug_profile: DrugProfile,
     baroreflex = baroreflex_response(current_hemodynamics['mean_arterial_pressure'])
     
     # Display enhanced metrics
-    st.markdown("### 💊 Advanced Pharmacology")
+    st.markdown("### Advanced Pharmacology")
     col1, col2 = st.columns(2)
     with col1:
         st.metric("Central Concentration", f"{pk_advanced['central_concentration']:.2f} mg/L")
@@ -103,7 +103,7 @@ def render_current_status(heart_model: HeartModel, drug_profile: DrugProfile,
         st.metric("Peripheral Concentration", f"{pk_advanced['peripheral_concentration']:.2f} mg/L")
         st.metric("Distribution Ratio", f"{pk_advanced['distribution_ratio']:.2f}")
     
-    st.markdown("### ❤️ Enhanced Cardiac Parameters")
+    st.markdown("### Enhanced Cardiac Parameters")
     col1, col2 = st.columns(2)
     with col1:
         st.metric("Heart Rate", f"{current_hr:.0f} bpm", 
@@ -114,7 +114,7 @@ def render_current_status(heart_model: HeartModel, drug_profile: DrugProfile,
         st.metric("MVO₂ Consumption", f"{o2_demand['mvo2_total']:.1f} mL O₂/min/100g")
         st.metric("Mechanical Efficiency", f"{o2_demand['mechanical_efficiency']:.1f}%")
     
-    st.markdown("### 🔄 Advanced Hemodynamics")
+    st.markdown("### Advanced Hemodynamics")
     col1, col2 = st.columns(2)
     with col1:
         st.metric("Cardiac Output", f"{current_co:.1f} L/min")
@@ -125,7 +125,7 @@ def render_current_status(heart_model: HeartModel, drug_profile: DrugProfile,
         st.metric("Stroke Work", f"{current_hemodynamics['stroke_work']:.2f} J")
         st.metric("Baroreflex Response", f"{baroreflex['autonomic_response']:.2f}")
     
-    st.markdown("### 🧠 Autonomic System")
+    st.markdown("### Autonomic System")
     col1, col2 = st.columns(2)
     with col1:
         st.metric("Sympathetic Tone", f"{heart_model.sympathetic_tone:.2f}")
@@ -142,7 +142,7 @@ def render_pv_loop_controls():
         Tuple of selected time points
     """
     st.markdown("---")
-    st.subheader("📈 Pressure-Volume Loop Analysis")
+    st.subheader("Pressure-Volume Loop Analysis")
     st.markdown("Compare cardiac performance at different time points to visualize drug effects on ventricular function.")
 
     # Select time points for PV loop comparison
@@ -162,13 +162,13 @@ def render_drug_info(drug_profile: DrugProfile):
         drug_profile: Drug profile to display
     """
     st.markdown("---")
-    st.subheader("💊 Drug Information")
+    st.subheader("Drug Information")
     st.markdown(f"**Current Selection:** {drug_profile.name}")
 
     drug_info_col1, drug_info_col2 = st.columns(2)
 
     with drug_info_col1:
-        st.markdown("**📋 Basic Properties**")
+        st.markdown("**Basic Properties**")
         st.write(f"• **Mechanism:** {drug_profile.mechanism}")
         st.write(f"• **Volume of Distribution:** {drug_profile.vd} L")
         st.write(f"• **Half-life:** {drug_profile.half_life} hours")
