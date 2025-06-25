@@ -67,67 +67,131 @@ def main():
     # Drug information panel
     render_drug_info(params['drug_profile'])
 
-    # Model Internals Section
+    # Model Internals Section with Modular Components
     st.markdown("---")
     st.subheader("🔬 Model Internals & Computational Details")
-    st.markdown("This section shows what the model computed under the hood, including pharmacokinetics, " +
-               "receptor binding, tolerance development, autonomic responses, and machine learning predictions.")
+    st.markdown("This section shows what the model computed under the hood, organized by physiological system.")
     
-    # Create expandable section for model internals
-    with st.expander("Show Detailed Model Computations", expanded=True):
-        st.markdown("### Comprehensive Model Analysis")
-        st.markdown("The following visualization shows all the computational steps and intermediate " +
-                   "calculations performed by the enhanced physiological models:")
+    # Create tabbed interface for different model components
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "Pharmacokinetics", 
+        "Pharmacodynamics", 
+        "Hemodynamics", 
+        "Machine Learning", 
+        "Autonomic System"
+    ])
+    
+    with tab1:
+        st.markdown("### Pharmacokinetic Model Internals")
+        st.markdown("Shows drug absorption, distribution, metabolism, and elimination processes.")
         
-        # Generate model internals plot
-        fig_internals = plot_model_internals(time_points, params['dose'], 
-                                           params['drug_profile'], heart_model)
-        st.pyplot(fig_internals)
+        from utils.visualization import plot_pk_internals
+        fig_pk = plot_pk_internals(time_points, params['dose'], params['drug_profile'])
+        st.pyplot(fig_pk)
         
-        # Add detailed explanations
-        st.markdown("#### Visualization Explanation")
+        st.markdown("""
+        **Key Insights:**
+        - **Compartment Models**: Compare simple 1-compartment vs. realistic 2-compartment kinetics
+        - **Distribution**: How drug distributes between central and peripheral tissues
+        - **Metabolism**: Michaelis-Menten kinetics showing saturable metabolism
+        - **Saturation**: Degree of metabolic pathway saturation over time
+        """)
+    
+    with tab2:
+        st.markdown("### Pharmacodynamic Model Internals")
+        st.markdown("Shows how drug concentration translates to physiological effects.")
         
-        col1, col2 = st.columns(2)
+        from utils.visualization import plot_pd_internals
+        fig_pd = plot_pd_internals(time_points, params['dose'], params['drug_profile'], heart_model)
+        st.pyplot(fig_pd)
         
-        with col1:
-            st.markdown("""
-            **Pharmacokinetics (Row 1):**
-            - **Simple vs. Complex PK**: Comparison of 1-compartment vs. 2-compartment models
-            - **Receptor Occupancy**: Percentage of target receptors bound by drug
-            - **Metabolic Rate**: Rate of drug metabolism (Michaelis-Menten kinetics)
-            - **Metabolic Saturation**: How close the metabolism is to saturation
-            
-            **Pharmacodynamics (Row 2):**
-            - **HR/Contractility Effects**: Basic Hill equation vs. tolerance-adjusted effects
-            - **Tolerance Development**: How drug tolerance develops over time
-            - **Circadian Modulation**: How time of day affects drug response
-            """)
+        st.markdown("""
+        **Key Insights:**
+        - **Tolerance**: How drug effects diminish over time due to receptor desensitization
+        - **Receptor Binding**: Percentage of target receptors occupied by drug
+        - **Circadian Effects**: How time of day modulates drug response
+        - **Hill Equation**: Dose-response relationship shape and steepness
+        """)
+    
+    with tab3:
+        st.markdown("### Hemodynamic Model Internals")
+        st.markdown("Shows detailed cardiovascular mechanics and energetics.")
         
-        with col2:
-            st.markdown("""
-            **Hemodynamics & Energetics (Row 3):**
-            - **Stroke Volume**: Calculated using Frank-Starling mechanism
-            - **Blood Pressure**: Windkessel model with systolic/diastolic separation
-            - **MVO₂ Consumption**: Myocardial oxygen demand based on wall stress
-            - **Mechanical Efficiency**: Ratio of external work to energy consumption
-            
-            **Autonomic & ML (Row 4):**
-            - **Autonomic Response**: Baroreflex-mediated autonomic adjustments
-            - **HR Adjustment**: Baroreceptor-driven heart rate changes
-            - **ML Feature Importance**: Which features matter most for predictions
-            - **Ensemble Weights**: How different ML models are weighted
-            """)
+        from utils.visualization import plot_hemodynamic_internals
+        fig_hemo = plot_hemodynamic_internals(time_points, params['dose'], params['drug_profile'], heart_model)
+        st.pyplot(fig_hemo)
         
-        # Technical details section
-        st.markdown("#### Technical Implementation Details")
+        st.markdown("""
+        **Key Insights:**
+        - **Frank-Starling**: How preload affects stroke volume
+        - **Windkessel Model**: Systolic and diastolic pressure generation
+        - **Oxygen Demand**: Myocardial energy requirements
+        - **Efficiency**: Mechanical work vs. energy consumption ratio
+        """)
+    
+    with tab4:
+        st.markdown("### Machine Learning Model Internals")
+        st.markdown("Shows how the ML ensemble makes predictions and model uncertainty.")
+        
+        from utils.visualization import plot_ml_internals
+        fig_ml = plot_ml_internals(time_points, params['dose'], params['drug_profile'], heart_model)
+        st.pyplot(fig_ml)
         
         st.markdown(f"""
-        **Current Model Configuration:**
+        **Current ML Configuration:**
+        - **Models**: {', '.join(heart_model.ml_models.keys())}
+        - **Model Weights**: {', '.join([f'{k}: {v:.3f}' for k, v in heart_model.model_weights.items()])}
+        - **Features**: 7 physiological and temporal features
+        - **Training**: {heart_model.ml_models['rf'].n_estimators} trees in Random Forest
+        
+        **Key Insights:**
+        - **Model Agreement**: How well different algorithms agree
+        - **Ensemble Weighting**: Which models contribute most to final predictions
+        - **Uncertainty**: Prediction variance indicates model confidence
+        - **Feature Importance**: Which inputs most influence cardiac output predictions
+        """)
+    
+    with tab5:
+        st.markdown("### Autonomic System Model Internals")
+        st.markdown("Shows baroreflex responses and respiratory-cardiovascular coupling.")
+        
+        from utils.visualization import plot_autonomic_internals
+        fig_auto = plot_autonomic_internals(time_points, params['dose'], params['drug_profile'], heart_model)
+        st.pyplot(fig_auto)
+        
+        st.markdown("""
+        **Key Insights:**
+        - **Baroreflex**: Automatic blood pressure regulation responses
+        - **HR Adjustments**: How baroreceptors modulate heart rate
+        - **Respiratory Coupling**: Heart rate variability due to breathing
+        - **Combined Effects**: Integration of multiple autonomic influences
+        """)
+    
+    # Technical Summary
+    st.markdown("---")
+    st.markdown("### 🔧 Technical Implementation Summary")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown(f"""
+        **Current Simulation Parameters:**
         - **Drug**: {params['drug_profile'].name} ({params['drug_profile'].mechanism})
         - **Dose**: {params['dose']} mg
-        - **Patient Condition**: {params['patient_condition']}
-        - **ML Models**: {', '.join(heart_model.ml_models.keys())}
-        - **Model Weights**: {', '.join([f'{k}: {v:.2f}' for k, v in heart_model.model_weights.items()])}  
+        - **Patient**: {params['patient_condition']}
+        - **Duration**: {params['sim_duration']} hours
+        - **Time Points**: {len(time_points)} calculations
+        """)
+    
+    with col2:
+        st.markdown("""
+        **Model Features:**
+        - 2-compartment pharmacokinetics
+        - Receptor binding kinetics  
+        - Tolerance development
+        - Ensemble machine learning
+        - Baroreflex regulation
+        - Respiratory coupling
         """)
 
     # Footer

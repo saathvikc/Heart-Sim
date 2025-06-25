@@ -130,7 +130,18 @@ class HeartModel:
         
         return np.clip(co, 2, 15)  # Physiological range
     
-    def predict_cardiac_output(self, drug_conc: float, hr: float, contractility: float, time_hrs: float, **kwargs) -> float:
+    def get_best_model_name(self) -> str:
+        """Get the name of the best-performing ML model"""
+        best_model_name = ""
+        best_weight = 0.0
+        for name, weight in self.model_weights.items():
+            if weight > best_weight:
+                best_weight = weight
+                best_model_name = name
+        return best_model_name
+    
+    def predict_cardiac_output(self, drug_conc: float, hr: float, contractility: float, time_hrs: float, 
+                              use_best_model: bool = False, **kwargs) -> float:
         """
         Use enhanced ML ensemble to predict cardiac output with additional physiological factors
         
@@ -139,6 +150,7 @@ class HeartModel:
             hr: Heart rate
             contractility: Contractility
             time_hrs: Time since dose in hours
+            use_best_model: If True, use only the best-performing model instead of ensemble
             **kwargs: Additional parameters (sympathetic_tone, age, circadian_phase)
             
         Returns:
@@ -154,13 +166,18 @@ class HeartModel:
                             sympathetic_tone, age, circadian_phase]])
         features_scaled = self.scaler.transform(features)
         
-        # Ensemble prediction with weighted average
-        ensemble_prediction = 0
-        for name, model in self.ml_models.items():
-            prediction = model.predict(features_scaled)[0]
-            ensemble_prediction += self.model_weights[name] * prediction
-        
-        return ensemble_prediction
+        if use_best_model:
+            # Use only the best-performing model
+            best_model_name = self.get_best_model_name()
+            return self.ml_models[best_model_name].predict(features_scaled)[0]
+        else:
+            # Ensemble prediction with weighted average
+            ensemble_prediction = 0
+            for name, model in self.ml_models.items():
+                prediction = model.predict(features_scaled)[0]
+                ensemble_prediction += self.model_weights[name] * prediction
+            
+            return ensemble_prediction
     
     def apply_patient_condition(self, condition: str):
         """
