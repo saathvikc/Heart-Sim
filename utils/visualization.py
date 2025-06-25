@@ -62,12 +62,31 @@ def plot_time_course(time_points: np.ndarray, concentrations: List[float],
     ax3.tick_params(axis='both', which='major', labelsize=10)
     
     # Cardiac output
-    ax4.plot(time_points, co_values, linewidth=3, color='#ff7f0e')
-    ax4.set_title('Cardiac Output vs Time (ML Prediction)', fontsize=14, fontweight='bold', pad=20)
+    ax4.plot(time_points, co_values, linewidth=3, color='#ff7f0e', label='ML Prediction')
+    
+    # Calculate cardiac output from equations (not ML)
+    co_eq_values = []
+    for i, t in enumerate(time_points):
+        # Use the same HR and contractility as above
+        hr = hr_values[i]
+        contractility = contractility_values[i]
+        # Estimate afterload as baseline (or you can use drug effect if available)
+        afterload = heart_model.baseline_afterload
+        hemodynamics = calculate_hemodynamics(
+            hr, contractility, afterload,
+            heart_model.baseline_preload,
+            heart_model.esv_base, heart_model.v0,
+            heart_model.e_min
+        )
+        co_eq_values.append(hemodynamics['cardiac_output'])
+    ax4.plot(time_points, co_eq_values, linewidth=2, color='#1f77b4', linestyle='--', label='Equation-based')
+    
+    ax4.set_title('Cardiac Output vs Time (ML & Equation)', fontsize=14, fontweight='bold', pad=20)
     ax4.set_xlabel('Time (hours)', fontsize=12)
     ax4.set_ylabel('Cardiac Output (L/min)', fontsize=12)
     ax4.grid(True, alpha=0.3, linestyle='-', linewidth=0.5)
     ax4.tick_params(axis='both', which='major', labelsize=10)
+    ax4.legend(fontsize=10)
     
     # Improve spacing between subplots
     plt.tight_layout(pad=3.0, h_pad=3.0, w_pad=3.0)
