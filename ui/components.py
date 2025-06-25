@@ -56,15 +56,27 @@ def render_current_status(heart_model: HeartModel, drug_profile: DrugProfile,
     # Current time selector
     current_time = st.slider("Current Time (hours)", 0.0, float(sim_duration), 2.0, 0.1)
     
-    # Calculate current values
+    # Calculate current values with enhanced modeling
+    from models.pharmacology import pk_two_compartment_model, pd_effect_with_tolerance
+    from models.cardiac_mechanics import calculate_myocardial_oxygen_demand, baroreflex_response
+    
     current_conc = pk_concentration(current_time, dose, drug_profile)
-    current_hr = pd_effect(current_conc, heart_model.baseline_hr, drug_profile.emax_hr, 
-                          drug_profile.ec50_hr, drug_profile.hill_coefficient)
-    current_contractility = pd_effect(current_conc, heart_model.baseline_contractility, 
-                                    drug_profile.emax_contractility, 
-                                    drug_profile.ec50_contractility, 
-                                    drug_profile.hill_coefficient)
-    current_co = heart_model.predict_cardiac_output(current_conc, current_hr, current_contractility, current_time)
+    pk_advanced = pk_two_compartment_model(current_time, dose, drug_profile)
+    
+    # Enhanced PD with tolerance
+    current_hr = pd_effect_with_tolerance(current_conc, heart_model.baseline_hr, 
+                                        drug_profile.emax_hr, drug_profile.ec50_hr, 
+                                        drug_profile.hill_coefficient, current_time, 0.05)
+    current_contractility = pd_effect_with_tolerance(current_conc, heart_model.baseline_contractility, 
+                                                   drug_profile.emax_contractility, 
+                                                   drug_profile.ec50_contractility, 
+                                                   drug_profile.hill_coefficient, current_time, 0.03)
+    
+    # Enhanced ML prediction with circadian effects
+    current_co = heart_model.predict_cardiac_output(current_conc, current_hr, current_contractility, 
+                                                  current_time, 
+                                                  sympathetic_tone=heart_model.sympathetic_tone,
+                                                  circadian_phase=(current_time % 24))
     
     current_afterload = pd_effect(current_conc, heart_model.baseline_afterload, 
                                 drug_profile.emax_afterload/100, 
@@ -76,21 +88,51 @@ def render_current_status(heart_model: HeartModel, drug_profile: DrugProfile,
                                                 heart_model.esv_base, heart_model.v0, 
                                                 heart_model.e_min)
     
-    # Display metrics with better formatting
-    st.markdown("### 💊 Pharmacology")
-    st.metric("Drug Concentration", f"{current_conc:.2f} mg/L")
+    # Calculate advanced metrics
+    o2_demand = calculate_myocardial_oxygen_demand(current_hr, current_contractility, 
+                                                 current_afterload, current_hemodynamics['stroke_volume'])
+    baroreflex = baroreflex_response(current_hemodynamics['mean_arterial_pressure'])
     
-    st.markdown("### ❤️ Cardiac Parameters")
-    st.metric("Heart Rate", f"{current_hr:.0f} bpm", 
-              f"{current_hr - heart_model.baseline_hr:+.0f}")
-    st.metric("Contractility", f"{current_contractility:.2f} mmHg/mL", 
-              f"{current_contractility - heart_model.baseline_contractility:+.2f}")
+    # Display enhanced metrics
+    st.markdown("### 💊 Advanced Pharmacology")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Central Concentration", f"{pk_advanced['central_concentration']:.2f} mg/L")
+        st.metric("Drug Concentration", f"{current_conc:.2f} mg/L")
+    with col2:
+        st.metric("Peripheral Concentration", f"{pk_advanced['peripheral_concentration']:.2f} mg/L")
+        st.metric("Distribution Ratio", f"{pk_advanced['distribution_ratio']:.2f}")
     
-    st.markdown("### 🔄 Hemodynamics")
-    st.metric("Cardiac Output", f"{current_co:.1f} L/min")
-    st.metric("Stroke Volume", f"{current_hemodynamics['stroke_volume']:.0f} mL")
-    st.metric("Ejection Fraction", f"{current_hemodynamics['ejection_fraction']:.1f}%")
-    st.metric("Mean Arterial Pressure", f"{current_hemodynamics['mean_arterial_pressure']:.0f} mmHg")
+    st.markdown("### ❤️ Enhanced Cardiac Parameters")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Heart Rate", f"{current_hr:.0f} bpm", 
+                  f"{current_hr - heart_model.baseline_hr:+.0f}")
+        st.metric("Contractility", f"{current_contractility:.2f} mmHg/mL", 
+                  f"{current_contractility - heart_model.baseline_contractility:+.2f}")
+    with col2:
+        st.metric("MVO₂ Consumption", f"{o2_demand['mvo2_total']:.1f} mL O₂/min/100g")
+        st.metric("Mechanical Efficiency", f"{o2_demand['mechanical_efficiency']:.1f}%")
+    
+    st.markdown("### 🔄 Advanced Hemodynamics")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Cardiac Output", f"{current_co:.1f} L/min")
+        st.metric("Stroke Volume", f"{current_hemodynamics['stroke_volume']:.0f} mL")
+        st.metric("Blood Pressure", f"{current_hemodynamics['systolic_pressure']:.0f}/{current_hemodynamics['diastolic_pressure']:.0f} mmHg")
+    with col2:
+        st.metric("Ejection Fraction", f"{current_hemodynamics['ejection_fraction']:.1f}%")
+        st.metric("Stroke Work", f"{current_hemodynamics['stroke_work']:.2f} J")
+        st.metric("Baroreflex Response", f"{baroreflex['autonomic_response']:.2f}")
+    
+    st.markdown("### 🧠 Autonomic System")
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Sympathetic Tone", f"{heart_model.sympathetic_tone:.2f}")
+        st.metric("HR Adjustment", f"{baroreflex['hr_adjustment']:+.1f} bpm")
+    with col2:
+        st.metric("Contractility Adj.", f"{baroreflex['contractility_adjustment']:+.2f}")
+        st.metric("Resistance Adj.", f"{baroreflex['resistance_adjustment']:+.2f}")
 
 def render_pv_loop_controls():
     """

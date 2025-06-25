@@ -100,5 +100,57 @@ DRUG_DATABASE: Dict[str, DrugProfile] = {
         emax_afterload=8,
         hill_coefficient=1.0,
         mechanism="β1-selective blocker"
+    ),
+    "Carvedilol": DrugProfile(
+        name="Carvedilol",
+        vd=115,
+        half_life=7.5,
+        ec50_contractility=3.0,
+        emax_contractility=-0.4,
+        ec50_hr=2.5,
+        emax_hr=-12,
+        ec50_afterload=2.0,
+        emax_afterload=-25,
+        hill_coefficient=1.2,
+        mechanism="α/β-blocker"
+    ),
+    "Norepinephrine": DrugProfile(
+        name="Norepinephrine",
+        vd=8,
+        half_life=0.033,
+        ec50_contractility=0.8,
+        emax_contractility=1.8,
+        ec50_hr=1.2,
+        emax_hr=20,
+        ec50_afterload=0.5,
+        emax_afterload=40,
+        hill_coefficient=1.6,
+        mechanism="α/β-agonist"
+    ),
+    "Levosimendan": DrugProfile(
+        name="Levosimendan",
+        vd=20,
+        half_life=1.5,
+        ec50_contractility=1.5,
+        emax_contractility=1.4,
+        ec50_hr=2.0,
+        emax_hr=10,
+        ec50_afterload=1.8,
+        emax_afterload=-30,
+        hill_coefficient=1.3,
+        mechanism="Ca²⁺ sensitizer"
+    ),
+    "Vasopressin": DrugProfile(
+        name="Vasopressin",
+        vd=12,
+        half_life=0.33,
+        ec50_contractility=5.0,
+        emax_contractility=0.3,
+        ec50_hr=8.0,
+        emax_hr=-5,
+        ec50_afterload=0.2,
+        emax_afterload=60,
+        hill_coefficient=2.0,
+        mechanism="V1 receptor agonist"
     )
 }
